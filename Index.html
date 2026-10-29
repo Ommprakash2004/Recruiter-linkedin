@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Recruiter Radar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: one calm column. Form on top, then two tabs: live LinkedIn searches for recruiters / hiring managers, and ready-to-send messages. */
+:root {
+  --bg: #F1F5F5;
+  --surface: #FFFFFF;
+  --ink: #10232A;
+  --muted: #52656C;
+  --line: #D3DDDF;
+  --accent: #0B6E6E;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DDF0EE;
+  --warn: #B45309;
+  --ok: #2F7D4F;
+  --display: "Familjen Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C1619; --surface: #121F24; --ink: #E6EFF0; --muted: #93A8AE; --line: #243238;
+    --accent: #3FC1B8; --accent-ink: #06201F; --accent-soft: #14343A; --warn: #F0A04B; --ok: #6CCB92;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C1619; --surface: #121F24; --ink: #E6EFF0; --muted: #93A8AE; --line: #243238;
+  --accent: #3FC1B8; --accent-ink: #06201F; --accent-soft: #14343A; --warn: #F0A04B; --ok: #6CCB92;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.wrap { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; line-height: 1.15; }
+h1 { font-size: clamp(28px, 6vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 700; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lede { color: var(--muted); max-width: 62ch; margin-top: 8px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field.wide { grid-column: 1 / -1; }
+label { font-size: 13px; font-weight: 600; }
+label span { font-weight: 400; color: var(--muted); }
+input, textarea {
+  font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; width: 100%; min-width: 0;
+}
+input:focus-visible, textarea:focus-visible, .btn:focus-visible, .tab:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.note { font-size: 13px; color: var(--muted); }
+
+.tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); }
+.tab {
+  font: inherit; font-weight: 600; background: none; border: 0; color: var(--muted);
+  padding: 10px 14px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px;
+}
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+.section { display: flex; flex-direction: column; gap: 12px; }
+.section-head { display: flex; flex-direction: column; gap: 2px; }
+.section-head p { color: var(--muted); font-size: 14px; }
+.cards { display: flex; flex-direction: column; gap: 10px; }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+}
+.card-main { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.card-main p { color: var(--muted); font-size: 14px; }
+.q { font-family: var(--mono); font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.card.done { opacity: 0.62; }
+.card.done h3::after { content: "  done"; font-family: var(--mono); font-size: 11px; color: var(--ok); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.btn {
+  font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.small { padding: 6px 10px; font-size: 13px; }
+.btn:hover { filter: brightness(0.96); }
+
+.co {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+}
+.co strong { font-family: var(--display); font-size: 16px; overflow-wrap: anywhere; min-width: 0; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.empty { color: var(--muted); font-size: 14px; padding: 12px 0; }
+
+.tips { background: var(--accent-soft); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.tips ul { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+
+.msg { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.msg-top { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: baseline; }
+.msg-top p { font-size: 13px; color: var(--muted); }
+.count { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.count.over { color: var(--warn); font-weight: 500; }
+.msg textarea { line-height: 1.5; resize: vertical; }
+.msg-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.status { font-size: 13px; color: var(--ok); }
+.req { color: var(--warn); font-weight: 700; }
+input.bad { border-color: var(--warn); }
+.gate { background: var(--surface); border: 1px solid var(--warn); color: var(--ink); border-radius: 10px; padding: 14px 16px; font-size: 14px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: no-preference) { .btn, .tab { transition: filter .15s, color .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Job search desk</span>
+    <h1>Recruiter Radar</h1>
+    <p class="lede">Type your job role once. You get live LinkedIn searches for active recruiters and hiring managers, plus connection notes and messages ready to copy.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="yours">
+    <h2 id="yours" style="margin-bottom:12px">Your details</h2>
+    <div class="form">
+      <div class="field"><label for="f-role">Job role you want <b class="req" title="Required">*</b></label><input id="f-role" autocomplete="off" required aria-required="true" value="Data Analyst"></div>
+      <div class="field"><label for="f-loc">City or country <b class="req" title="Required">*</b></label><input id="f-loc" autocomplete="off" required aria-required="true" value="Bengaluru"></div>
+      <div class="field"><label for="f-exp">Years of experience <b class="req" title="Required">*</b> <span>(0 if fresher)</span></label><input id="f-exp" inputmode="decimal" autocomplete="off" required aria-required="true" value="2"></div>
+      <div class="field"><label for="f-name">Your name</label><input id="f-name" autocomplete="name" placeholder="Used in your messages"></div>
+      <div class="field wide"><label for="f-skills">Top skills <span>(comma separated, first three are used)</span></label><input id="f-skills" autocomplete="off" value="SQL, Python, Power BI"></div>
+      <div class="field wide"><label for="f-mgr">Hiring manager title <span>(optional, like Analytics Manager)</span></label><input id="f-mgr" autocomplete="off" placeholder="Leave empty to search manager, head and director titles"></div>
+      <div class="field wide"><label for="f-cos">Target companies <span>(optional, comma separated)</span></label><input id="f-cos" autocomplete="off" value="Flipkart, Swiggy, Razorpay"></div>
+    </div>
+    <p class="note" style="margin-top:12px"><b class="req">*</b> Required. Target companies are optional. The values above are examples; replace them with yours and everything below updates.</p>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-people" aria-selected="true" aria-controls="view-people">Find people</button>
+    <button class="tab" role="tab" id="tab-msgs" aria-selected="false" aria-controls="view-msgs">Messages</button>
+  </div>
+
+  <main id="view-people" role="tabpanel" aria-labelledby="tab-people" class="wrap" style="gap:26px"></main>
+  <main id="view-msgs" role="tabpanel" aria-labelledby="tab-msgs" class="wrap" style="gap:14px" hidden></main>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var ids = ["role", "loc", "name", "exp", "skills", "mgr", "cos"];
+  var KEY = "recruiter-radar-v1", DONE = "recruiter-radar-done-v1";
+  var done = {};
+
+  function load(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  var saved = load(KEY);
+  if (saved) ids.forEach(function (i) { if (typeof saved[i] === "string") $("f-" + i).value = saved[i]; });
+  done = load(DONE) || {};
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function enc(s) { return encodeURIComponent(s); }
+  function vals() {
+    var v = {};
+    ids.forEach(function (i) { v[i] = $("f-" + i).value.trim(); });
+    v.role = v.role.replace(/"/g, "");
+    v.skillList = v.skills.split(",").map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 3);
+    v.companies = v.cos.split(",").map(function (s) { return s.trim().replace(/"/g, ""); }).filter(Boolean).slice(0, 12);
+    return v;
+  }
+
+  function missing(v) {
+    var m = [];
+    if (!v.role) m.push("your job role");
+    if (!v.loc) m.push("your city or country");
+    if (v.exp === "" || isNaN(parseFloat(v.exp))) m.push("your years of experience");
+    return m;
+  }
+  function markFields(v) {
+    $("f-role").classList.toggle("bad", !v.role);
+    $("f-loc").classList.toggle("bad", !v.loc);
+    $("f-exp").classList.toggle("bad", v.exp === "" || isNaN(parseFloat(v.exp)));
+  }
+
+  var L = "https://www.linkedin.com/";
+  function people(q) { return L + "search/results/people/?keywords=" + enc(q) + "&origin=GLOBAL_SEARCH_HEADER"; }
+  function posts(q, range) {
+    return L + "search/results/content/?keywords=" + enc(q) + "&datePosted=" + enc('"' + range + '"') + "&sortBy=" + enc('"date_posted"');
+  }
+  function jobs(q, loc) { return L + "jobs/search/?keywords=" + enc(q) + (loc ? "&location=" + enc(loc) : "") + "&f_TPR=r604800"; }
+
+  function card(c) {
+    var isDone = !!done[c.url];
+    return '<article class="card' + (isDone ? " done" : "") + '">' +
+      '<div class="card-main"><h3>' + esc(c.t) + '</h3><p>' + esc(c.d) + '</p>' +
+      (c.q ? '<span class="q">' + esc(c.q) + '</span>' : "") + '</div>' +
+      '<div class="card-actions"><a class="btn primary" target="_blank" rel="noopener" href="' + esc(c.url) + '">Open on LinkedIn</a>' +
+      '<button class="btn" type="button" data-done="' + esc(c.url) + '">' + (isDone ? "Undo" : "Mark done") + '</button></div></article>';
+  }
+  function section(title, sub, cards) {
+    return '<section class="section"><div class="section-head"><h2>' + esc(title) + '</h2><p>' + esc(sub) + '</p></div><div class="cards">' + cards.map(card).join("") + '</div></section>';
+  }
+
+  function renderPeople() {
+    var v = vals();
+    var miss = missing(v);
+    markFields(v);
+    if (miss.length) {
+      $("view-people").innerHTML = '<p class="gate">Fill in ' + miss.join(", ") + ' above to see your searches.</p>';
+      return;
+    }
+    var r = v.role, loc = v.loc;
+    var recQ1 = '(recruiter OR "talent acquisition" OR "talent partner") AND "' + r + '"';
+    var recQ2 = '(recruiter OR "talent acquisition" OR "technical recruiter") AND hiring' + (loc ? " AND " + loc : "");
+    var recQ3 = '(recruiter OR "talent acquisition") AND ("we are hiring" OR "now hiring" OR "open roles") AND "' + r + '"';
+    var mgrQ1 = v.mgr ? '"' + v.mgr.replace(/"/g, "") + '"' + (loc ? " AND " + loc : "") : '(manager OR head OR director OR lead) AND "' + r + '"' + (loc ? " AND " + loc : "");
+    var mgrQ2 = '"hiring manager" AND "' + r + '"';
+    var mgrQ3 = '"my team is hiring" OR "we are hiring" AND "' + r + '"';
+    var postQ = 'hiring "' + r + '"' + (loc ? " " + loc : "");
+
+    var html = "";
+    html += section("Active recruiters", "People with recruiter titles who are hiring for your role. Sort results by recent activity on LinkedIn.", [
+      { t: "Recruiters hiring for " + r, d: "Recruiter and talent acquisition titles that mention your role.", q: recQ1, url: people(recQ1) },
+      { t: "Recruiters hiring in " + (loc || "your city"), d: "Recruiters who mention hiring" + (loc ? " near " + loc : "") + ".", q: recQ2, url: people(recQ2) },
+      { t: "Recruiters posting open roles", d: "Recruiters whose profiles say they are hiring this role right now.", q: recQ3, url: people(recQ3) }
+    ]);
+    html += section("Hiring managers", "The people who own the team and decide who gets interviewed.", [
+      { t: v.mgr ? v.mgr + " profiles" : "Managers and heads for " + r, d: "Manager, lead, head and director titles connected to your role.", q: mgrQ1, url: people(mgrQ1) },
+      { t: "Profiles that say hiring manager", d: "People who call themselves the hiring manager for this role.", q: mgrQ2, url: people(mgrQ2) },
+      { t: "Managers saying their team is hiring", d: "Profiles that announce an open team.", q: mgrQ3, url: people(mgrQ3) }
+    ]);
+    html += section("Fresh hiring posts", "The person who wrote a hiring post is usually the one to message. Posts from the last day get the fastest replies.", [
+      { t: "Hiring posts, last 24 hours", d: "Newest posts first.", q: postQ, url: posts(postQ, "past-24h") },
+      { t: "Hiring posts, last week", d: "A wider net if the last day is quiet.", q: postQ, url: posts(postQ, "past-week") },
+      { t: "Open jobs with a hiring team", d: "Open a job and look for the Meet the hiring team box.", q: r + (loc ? " in " + loc : "") + ", past week", url: jobs(r, loc) }
+    ]);
+
+    if (v.companies.length) {
+      html += '<section class="section"><div class="section-head"><h2>Your target companies</h2><p>Recruiters, managers and open jobs at each company.</p></div><div class="cards">';
+      v.companies.forEach(function (c) {
+        var a = '(recruiter OR "talent acquisition" OR "talent partner") AND "' + c + '"';
+        var b = '(manager OR head OR director) AND "' + c + '" AND "' + r + '"';
+        html += '<div class="co"><strong>' + esc(c) + '</strong><div class="chips">' +
+          '<a class="btn small" target="_blank" rel="noopener" href="' + esc(people(a)) + '">Recruiters</a>' +
+          '<a class="btn small" target="_blank" rel="noopener" href="' + esc(people(b)) + '">Hiring managers</a>' +
+          '<a class="btn small" target="_blank" rel="noopener" href="' + esc(jobs(r + " " + c, loc)) + '">Jobs</a></div></div>';
+      });
+      html += "</div></section>";
+    }
+
+    html += '<aside class="tips"><h3>Get more from each search</h3><ul>' +
+      '<li>LinkedIn does not let any page pull a list of profiles, so each button opens a live search. Results are always current.</li>' +
+      '<li>On the results page, filter by People, set Connections to 2nd, and add your location.</li>' +
+      '<li>Start with people who posted in the last few days. They are actively hiring.</li>' +
+      '<li>LinkedIn limits how many connection requests you can send each week, so send to your best matches first.</li>' +
+      '<li>Tap Mark done after you message someone so you do not repeat yourself.</li></ul></aside>';
+    $("view-people").innerHTML = html;
+  }
+
+  /* ---------- messages ---------- */
+  var recipient = { to: "", co: "" };
+  function list(a) {
+    if (!a.length) return "";
+    if (a.length === 1) return a[0];
+    return a.slice(0, -1).join(", ") + " and " + a[a.length - 1];
+  }
+  var templates = [
+    { id: "n-rec", title: "Connection note to a recruiter", hint: "Paste into Add a note on the connect screen.", limit: 300, fn: function (c) {
+      return "Hi " + c.to + ", I'm " + c.n + ", " + c.me + ". I noticed " + c.co + " is hiring for " + c.r + " roles and I'd love to be considered. Happy to share my resume. Thank you!";
+    } },
+    { id: "n-mgr", title: "Connection note to a hiring manager", hint: "Short and specific so it gets accepted.", limit: 300, fn: function (c) {
+      return "Hi " + c.to + ", I'm " + c.n + ", " + c.me + ". Your team's " + c.r + " opening at " + c.co + " caught my eye. I'd value connecting and learning what you look for in this role.";
+    } },
+    { id: "n-post", title: "Connection note after a hiring post", hint: "Use when someone posted that they are hiring.", limit: 300, fn: function (c) {
+      return "Hi " + c.to + ", I saw your post about the " + c.r + " opening at " + c.co + ". I'm " + c.n + ", " + c.me + ". I'd like to apply and would appreciate connecting. Thanks!";
+    } },
+    { id: "m-rec", title: "Message to a recruiter after they accept", hint: "Send within a day of the accept.", fn: function (c) {
+      return "Hi " + c.to + ", thanks for connecting!\n\nI'm " + c.n + ", " + c.me + (c.sk ? ". My strongest areas are " + c.sk : "") + ". I'm actively looking for " + c.r + " roles" + (c.loc ? " in " + c.loc : "") + " and noticed " + c.co + " is hiring.\n\nCould you tell me if my profile fits any current openings? I can send my resume right away and I'm happy to speak at a time that suits you.\n\nThanks,\n" + c.n;
+    } },
+    { id: "m-mgr", title: "Message to a hiring manager after they accept", hint: "Offer something small and useful.", fn: function (c) {
+      return "Hi " + c.to + ", thanks for accepting my request.\n\nI'm " + c.n + ", " + c.me + (c.sk ? ", working with " + c.sk : "") + ". I'm very interested in the " + c.r + " opening on your team at " + c.co + ". If it helps, I can send a short note on how I'd contribute in the first 90 days, or a sample of my work.\n\nWould you be open to a 10 minute chat this week?\n\nThanks,\n" + c.n;
+    } },
+    { id: "m-fu", title: "Follow-up after 5 to 7 days", hint: "Send once if there is no reply.", fn: function (c) {
+      return "Hi " + c.to + ", following up on my earlier message about " + c.r + " roles at " + c.co + ". I know your inbox is busy, so I'll keep it short: I can share my resume today and interview at short notice. If this role is filled, I'd appreciate being kept in mind for similar openings.\n\nThanks,\n" + c.n;
+    } }
+  ];
+
+  function ctx() {
+    var v = vals();
+    var yrs = parseFloat(v.exp);
+    var me = yrs === 0 ? "a fresher " + (v.role || "candidate") : "a " + (v.role || "professional") + (!isNaN(yrs) ? " with " + v.exp + (yrs === 1 ? " year" : " years") + " of experience" : "");
+    var sk = list(v.skillList);
+ 
